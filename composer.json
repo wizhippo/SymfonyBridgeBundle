@@ -19,22 +19,25 @@
         }
     },
     "require": {
-        "php": ">=5.5.1",
-        "symfony/framework-bundle": "~2.7|~3.0|~4.0|~5.0",
-        "symfony/dependency-injection": "~2.7|~3.0|~4.0|~5.0",
-        "symfony/yaml": "~2.7|~3.0|~4.0|~5.0",
-        "lightsaml/lightsaml": "~1.1"
+        "php": ">=7.0",
+        "symfony/framework-bundle": "~4.0|~5.0",
+        "symfony/dependency-injection": "~4.0|~5.0",
+        "symfony/yaml": "~4.0|~5.0",
+        "lightsaml/lightsaml": "dev-lsv2support"
     },
     "require-dev": {
-        "symfony/browser-kit": "~2.7|~3.0|~4.0|~5.0",
-        "symfony/finder": "~2.7|~3.0|~4.0|~5.0",
-        "symfony/filesystem": "~2.7|~3.0|~4.0|~5.0",
-        "symfony/routing": "~2.7|~3.0|~4.0|~5.0",
+        "symfony/browser-kit": "~4.0|~5.0",
+        "symfony/finder": "~4.0|~5.0",
+        "symfony/filesystem": "~4.0|~5.0",
+        "symfony/routing": "~4.0|~5.0",
         "phpunit/phpunit": "^5.7"
     },
     "config": {
         "bin-dir": "bin"
     },
     "prefer-stable": true,
-    "minimum-stability": "stable"
+    "minimum-stability": "stable",
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/wizhippo/lightSAML" }
+    ]
 }

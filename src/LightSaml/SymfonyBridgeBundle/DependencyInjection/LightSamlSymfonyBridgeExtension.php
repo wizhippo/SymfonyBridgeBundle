@@ -11,24 +11,23 @@
 
 namespace LightSaml\SymfonyBridgeBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\DefinitionDecorator;
+use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader;
 
 class LightSamlSymfonyBridgeExtension extends Extension
 {
     /**
      * Loads a specific configuration.
      *
-     * @param array            $config    An array of configuration values
+     * @param array $config An array of configuration values
      * @param ContainerBuilder $container A ContainerBuilder instance
      *
-     * @throws \InvalidArgumentException When provided tag is not defined in this extension
+     * @throws \InvalidArgumentException|\Exception When provided tag is not defined in this extension
      *
      * @api
      */
@@ -37,7 +36,7 @@ class LightSamlSymfonyBridgeExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $config);
 
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('container.yml');
         $loader->load('own.yml');
         $loader->load('system.yml');
@@ -91,18 +90,30 @@ class LightSamlSymfonyBridgeExtension extends Extension
     private function configureOwnEntityDescriptor(ContainerBuilder $container, array $config)
     {
         if (isset($config['own']['entity_descriptor_provider']['id'])) {
-            $container->setAlias('lightsaml.own.entity_descriptor_provider', $config['own']['entity_descriptor_provider']['id']);
+            $container->setAlias(
+                'lightsaml.own.entity_descriptor_provider',
+                $config['own']['entity_descriptor_provider']['id']
+            );
         } elseif (isset($config['own']['entity_descriptor_provider']['filename'])) {
             if (isset($config['own']['entity_descriptor_provider']['entity_id'])) {
                 $definition = $container->setDefinition('lightsaml.own.entity_descriptor_provider', new Definition());
                 $definition
                     ->addArgument($config['own']['entity_descriptor_provider']['filename'])
-                    ->addArgument($config['own']['entity_descriptor_provider']['entity_id']);
-                $this->setFactoryCompatibleWay($definition, 'LightSaml\Provider\EntityDescriptor\FileEntityDescriptorProviderFactory', 'fromEntitiesDescriptorFile');
+                    ->addArgument($config['own']['entity_descriptor_provider']['entity_id'])
+                ;
+                $this->setFactoryCompatibleWay(
+                    $definition,
+                    'LightSaml\Provider\EntityDescriptor\FileEntityDescriptorProviderFactory',
+                    'fromEntitiesDescriptorFile'
+                );
             } else {
                 $definition = $container->setDefinition('lightsaml.own.entity_descriptor_provider', new Definition())
                     ->addArgument($config['own']['entity_descriptor_provider']['filename']);
-                $this->setFactoryCompatibleWay($definition, 'LightSaml\Provider\EntityDescriptor\FileEntityDescriptorProviderFactory', 'fromEntityDescriptorFile');
+                $this->setFactoryCompatibleWay(
+                    $definition,
+                    'LightSaml\Provider\EntityDescriptor\FileEntityDescriptorProviderFactory',
+                    'fromEntityDescriptorFile'
+                );
             }
         } else {
             $definition = $container->getDefinition('lightsaml.own.entity_descriptor_provider');
@@ -113,7 +124,11 @@ class LightSamlSymfonyBridgeExtension extends Extension
                 ->addArgument(null)
                 ->addArgument(new Reference('lightsaml.own.credential_store'))
             ;
-            $this->setFactoryCompatibleWay($definition, 'LightSaml\SymfonyBridgeBundle\Factory\OwnEntityDescriptorProviderFactory', 'build');
+            $this->setFactoryCompatibleWay(
+                $definition,
+                'LightSaml\SymfonyBridgeBundle\Factory\OwnEntityDescriptorProviderFactory',
+                'build'
+            );
         }
     }
 
@@ -134,7 +149,7 @@ class LightSamlSymfonyBridgeExtension extends Extension
                 ]
             );
             $definition->addTag('lightsaml.own_credential_store');
-            $container->setDefinition('lightsaml.own.credential_store.'.$id, $definition);
+            $container->setDefinition('lightsaml.own.credential_store.' . $id, $definition);
         }
     }
 
@@ -156,19 +171,21 @@ class LightSamlSymfonyBridgeExtension extends Extension
             $store = $container->getDefinition('lightsaml.party.idp_entity_descriptor_store');
             foreach ($config['party']['idp']['files'] as $id => $file) {
                 $id = sprintf('lightsaml.party.idp_entity_descriptor_store.file.%s', $id);
-
-                if (class_exists('Symfony\Component\DependencyInjection\ChildDefinition')) {
-                    // Symfony >= 3.3
-                    $container
-                        ->setDefinition($id, new ChildDefinition('lightsaml.party.idp_entity_descriptor_store.file'))
-                        ->replaceArgument(0, $file);
-                } else {
-                    // Symfony < 3.3
-                    $container
-                        ->setDefinition($id, new DefinitionDecorator('lightsaml.party.idp_entity_descriptor_store.file'))
-                        ->replaceArgument(0, $file);
-                }
-
+                $container
+                    ->setDefinition($id, new ChildDefinition('lightsaml.party.idp_entity_descriptor_store.file'))
+                    ->replaceArgument(0, $file)
+                ;
+                $store->addMethodCall('add', [new Reference($id)]);
+            }
+        }
+        if (isset($config['party']['sp']['files'])) {
+            $store = $container->getDefinition('lightsaml.party.sp_entity_descriptor_store');
+            foreach ($config['party']['sp']['files'] as $id => $file) {
+                $id = sprintf('lightsaml.party.sp_entity_descriptor_store.file.%s', $id);
+                $container
+                    ->setDefinition($id, new ChildDefinition('lightsaml.party.sp_entity_descriptor_store.file'))
+                    ->replaceArgument(0, $file)
+                ;
                 $store->addMethodCall('add', [new Reference($id)]);
             }
         }
@@ -189,8 +206,8 @@ class LightSamlSymfonyBridgeExtension extends Extension
 
     /**
      * @param Definition $definition
-     * @param string     $classOrReference
-     * @param string     $method
+     * @param string $classOrReference
+     * @param string $method
      */
     private function setFactoryCompatibleWay(Definition $definition, $classOrReference, $method)
     {
@@ -198,7 +215,7 @@ class LightSamlSymfonyBridgeExtension extends Extension
             $definition->setFactory([$classOrReference, $method]);
         } else {
             if ($classOrReference instanceof Reference) {
-                $definition->setFactoryService((string) $classOrReference);
+                $definition->setFactoryService((string)$classOrReference);
             } else {
                 $definition->setFactoryClass($classOrReference);
             }

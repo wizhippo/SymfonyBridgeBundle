@@ -2,6 +2,12 @@ services:
     lightsaml.party.sp_entity_descriptor_store:
         class: LightSaml\Store\EntityDescriptor\CompositeEntityDescriptorStore
 
+    lightsaml.party.sp_entity_descriptor_store.file:
+        class: LightSaml\Store\EntityDescriptor\FileEntityDescriptorStore
+        arguments:
+            - ~ # filename
+        abstract: true
+
     lightsaml.party.idp_entity_descriptor_store:
         class: LightSaml\Store\EntityDescriptor\CompositeEntityDescriptorStore
 

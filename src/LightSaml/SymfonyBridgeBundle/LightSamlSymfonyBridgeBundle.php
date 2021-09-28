@@ -37,6 +37,11 @@ class LightSamlSymfonyBridgeBundle extends Bundle
             'add'
         ));
         $container->addCompilerPass(new AddMethodCallCompilerPass(
+            'lightsaml.party.sp_entity_descriptor_store',
+            'lightsaml.sp_entity_store',
+            'add'
+        ));
+        $container->addCompilerPass(new AddMethodCallCompilerPass(
             'lightsaml.credential.credential_store_factory',
             'lightsaml.credential',
             'addExtraCredential'
